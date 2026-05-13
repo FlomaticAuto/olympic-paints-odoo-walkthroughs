@@ -61,11 +61,15 @@
     <ul>
       <li><a href="#confirm">Confirm the quotation</a></li>
       <li><a href="#delivery-record">The delivery order</a></li>
-      <li><a href="#pick-validate">Pick &amp; validate</a></li>
+      <li><a href="#check-availability">Check availability</a></li>
+      <li><a href="#fix-lot-tracking">Fix "Not Available" issues</a></li>
+      <li><a href="#update-picked-qty">Update picked quantities</a></li>
+      <li><a href="#validate-delivery">Validate &amp; backorder</a></li>
     </ul>
     <h4>Phase 3 — Invoice &amp; Collect</h4>
     <ul>
-      <li><a href="#create-invoice">Create the invoice</a></li>
+      <li><a href="#create-invoice">Create the draft invoice</a></li>
+      <li><a href="#correct-invoice-qty">⚠ Correct the invoice quantities</a></li>
       <li><a href="#send-invoice">Send to customer</a></li>
       <li><a href="#register-payment">Register payment</a></li>
     </ul>
@@ -276,8 +280,12 @@
     <div class="step-num">6</div>
     <div class="step-body">
       <h3>Inspect the auto-generated delivery</h3>
-      <p>Click the <span class="btn-ref">Delivery</span> smart button (top right of the SO). This jumps you to the linked <span class="field">WH/OUT/000…</span> delivery record in the Inventory app.</p>
-      <p>The delivery has its own status flow: <span class="field">Draft</span> → <span class="field">Ready</span> → <span class="field">Done</span>. At this point it is normally <em>Ready</em> if stock is available.</p>
+      <p>Click the <span class="btn-ref">Delivery</span> smart button (top right of the SO). This jumps you to the linked <span class="field">OP/OUT/000…</span> delivery record in the Inventory app.</p>
+      <p>The delivery moves through these states: <span class="field">Draft</span> → <span class="field">Waiting</span> → <span class="field">Ready</span> → <span class="field">Done</span>. A freshly created delivery usually opens in <strong>Waiting</strong> — Odoo has not yet evaluated whether stock is available. Steps 7 and 8 walk you through the availability check and quantity confirmation; Step 9 is the actual validate.</p>
+      <div class="shot">
+        <img src="assets/screenshots/live/live-01-waiting-delivery.png" alt="Live Odoo — OP/OUT/00193 in Waiting state, both lines Not Available">
+        <div class="shot-caption">Live Odoo — A just-created delivery <span class="field">OP/OUT/00193</span> in <strong>Waiting</strong> state. Both lines show <span style="color:#E86060">Not Available</span> until Check Availability is run.</div>
+      </div>
       <div class="callout callout-info">
         <div class="callout-title">📌 Two ways forward from here</div>
         <p style="margin:0">From this point a sales order branches into <strong>two delivery paths</strong>:</p>
@@ -285,33 +293,130 @@
           <li><strong>Standard delivery</strong> — the delivery is added to a vehicle batch with a route, a driver, and a scheduled date. See <a href="03-vehicle-scheduling.html">Walkthrough 03 — Vehicle Scheduling</a>.</li>
           <li><strong>Customer collection</strong> — the customer is collecting from our premises; the delivery is validated at the counter when they arrive. See <a href="02-customer-collection.html">Walkthrough 02 — Customer Collection</a>.</li>
         </ol>
+        <p style="margin:8px 0 0">The Steps 7–10 below are the same for both paths — they're how the delivery itself is processed inside Odoo.</p>
       </div>
     </div>
   </div>
 
-  <div class="step" id="pick-validate">
+  <div class="step" id="check-availability">
     <div class="step-num">7</div>
     <div class="step-body">
-      <h3>Pick the stock &amp; validate the delivery</h3>
+      <h3>Click "Check Availability"</h3>
       <p><span class="login-as">Login as Logistics Olympic Paints</span></p>
-      <p>Navigate to the <span class="path">Inventory app → Operations tab → Deliveries</span> and open the relevant <span class="field">WH/OUT</span> record.</p>
+      <p>Open the delivery record (Sales Order → <span class="btn-ref">Delivery</span> smart button, or <span class="path">Inventory app → Operations → Deliveries</span> → click the <span class="field">OP/OUT</span>).</p>
+      <p>Click <span class="btn-ref">Check Availability</span> in the top toolbar. Odoo evaluates stock against the source location (<span class="field">OP/Stock</span>) and updates each line:</p>
+      <ul>
+        <li><strong style="color:#1a5c50">Available</strong> — stock is on hand and reserved for this delivery.</li>
+        <li><strong style="color:#C0392B">Not Available</strong> — either no physical stock <em>or</em> the stock is locked behind a lot tracking rule that hasn't been satisfied. See Step 8 to troubleshoot.</li>
+      </ul>
+      <p>If every line is Available, the delivery state flips to <span class="field">Ready</span>. Skip to Step 9.</p>
+      <p>If <em>any</em> line is still Not Available, continue to Step 8.</p>
+      <div class="shot">
+        <img src="assets/screenshots/live/live-03-check-availability-result.png" alt="Live Odoo — after Check Availability, one line Available, one Not Available">
+        <div class="shot-caption">Live Odoo — After clicking Check Availability, one product is now <strong style="color:#1a5c50">Available</strong>; the other remains <strong style="color:#C0392B">Not Available</strong> due to lot tracking (see Step 8).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="fix-lot-tracking">
+    <div class="step-num">8</div>
+    <div class="step-body">
+      <h3>Fix "Not Available" — usually lot tracking</h3>
+      <p>A line stays Not Available for one of two reasons:</p>
+      <table>
+        <thead><tr><th>Cause</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>No physical stock</strong> in OP/Stock</td>
+            <td>Either receive more stock first, reduce the quantity on this line (Step 9), or split the order into a backorder for the missing portion (Step 10).</td>
+          </tr>
+          <tr>
+            <td><strong>Lot tracking is blocking the issue</strong> — the product has <em>Track Inventory by Lots</em> enabled but no lot is assigned to this delivery line</td>
+            <td>Open the product, turn off lot tracking (or assign a lot), then return to the delivery and re-Check Availability.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><strong>To turn off lot tracking on a product:</strong></p>
       <ol>
-        <li>On each line, set the <span class="field">Done</span> quantity to match what was physically picked. If a partial pick, set <em>Done</em> to the lower number — Odoo will offer a backorder for the balance.</li>
-        <li>Click <span class="btn-ref">Validate</span>.</li>
-        <li>If quantities are partial, Odoo prompts: <em>Create Backorder?</em> — click <span class="btn-ref">Create Backorder</span> to keep the remaining quantity as a new delivery in <em>Ready</em> status.</li>
+        <li>On the delivery line, click the product name to open the product record.</li>
+        <li>On the <span class="field">General Information</span> tab, find <span class="field">Track Inventory</span>.</li>
+        <li>Untick the <span class="field">By Lots</span> checkbox.</li>
+        <li>Click <span class="btn-ref">Save</span>.</li>
+        <li>Use the breadcrumb to return to the delivery <span class="field">OP/OUT/000…</span>.</li>
+        <li>Click <span class="btn-ref">Check Availability</span> again — the line should now show Available.</li>
       </ol>
       <div class="shot">
-        <img src="assets/screenshots/sprint5/p024.png" alt="Sprint 5 — delivery validation">
-        <div class="shot-caption">Sprint 5, p.24–25 — Validating the delivery record reduces stock and marks the SO as delivered.</div>
+        <img src="assets/screenshots/live/live-04-product-untick-lot.png" alt="Live Odoo — Product page showing the Track Inventory By Lots checkbox">
+        <div class="shot-caption">Live Odoo — The <span class="field">Track Inventory</span> "By Lots" checkbox on the product record. Untick this to release the line from lot-tracking blocking.</div>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠ Why we disable lot tracking</div>
+        <p style="margin:0">Lot tracking is useful if we actually run lot management end-to-end. If lots haven't been assigned at receipt time, the lot-tracking rule blocks every outgoing delivery for that product — which is what's happening here. The practical fix at Olympic Paints today is to leave products as untracked. <strong>VERIFY:</strong> confirm with management whether lot tracking is a feature we intend to use long-term, or whether all products should be configured untracked at receipt.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="update-picked-qty">
+    <div class="step-num">9</div>
+    <div class="step-body">
+      <h3>Update the Quantity column to what was actually picked</h3>
+      <p>Two columns on each line matter here:</p>
+      <ul>
+        <li><span class="field">Demand</span> — what the customer ordered (read-only, mirrors the SO).</li>
+        <li><span class="field">Quantity</span> — what was <strong>actually picked</strong> in the warehouse. Editable. Defaults to match Demand; change it when the pick is partial.</li>
+      </ul>
+      <p>Edit the <span class="field">Quantity</span> on any line where the picked amount differs from the demand. Example: customer ordered 10 × 5L drums but the warehouse could only pick 9 — set Quantity to <strong>9.00</strong>, leave Demand at 10.00.</p>
+      <div class="shot">
+        <img src="assets/screenshots/live/live-02-update-quantity.png" alt="Live Odoo — Quantity column being edited from 10 to 9">
+        <div class="shot-caption">Live Odoo — Editing the <span class="field">Quantity</span> column. Demand stays 10.00; Quantity drops to 9.00 to reflect the actual pick.</div>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 This is also where lots are assigned, if used</div>
+        <p style="margin:0">If lot tracking is enabled and you didn't disable it in Step 8, click the <span class="btn-ref">Details</span> link on each line to pick the specific lot being picked.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="validate-delivery">
+    <div class="step-num">10</div>
+    <div class="step-body">
+      <h3>Validate the delivery (and create a backorder if needed)</h3>
+      <p>With every line now Available and the Quantity set correctly, click <span class="btn-ref">Validate</span> (top toolbar).</p>
+      <div class="shot">
+        <img src="assets/screenshots/live/live-05-ready-state.png" alt="Live Odoo — Delivery in Ready state with both lines Available, Validate highlighted">
+        <div class="shot-caption">Live Odoo — Delivery is in <span class="field">Ready</span> state, all lines <strong style="color:#1a5c50">Available</strong>. The <span class="btn-ref">Validate</span> button finalises the pick.</div>
+      </div>
+      <p>If you reduced any Quantity below the Demand on Step 9, Odoo prompts:</p>
+      <div class="shot">
+        <img src="assets/screenshots/live/live-06-backorder-popup.png" alt="Live Odoo — Create Backorder popup">
+        <div class="shot-caption">Live Odoo — The <em>Create Backorder?</em> popup appears whenever processed quantity is less than initial demand.</div>
+      </div>
+      <table>
+        <thead><tr><th>Choice</th><th>What happens</th></tr></thead>
+        <tbody>
+          <tr><td><span class="btn-ref">Create Backorder</span></td><td>Current delivery is marked Done for the picked quantity (e.g. 9 of 10). A <strong>new</strong> <span class="field">OP/OUT</span> is created with the residual (1 unit) in Ready status, ready to be processed on a future pick.</td></tr>
+          <tr><td><span class="btn-ref">No Backorder</span></td><td>Current delivery is marked Done; the residual is written off — the customer is effectively short-supplied and the SO records 9 delivered against 10 ordered.</td></tr>
+          <tr><td><span class="btn-ref">Discard</span></td><td>Cancels the validate; nothing changes. Useful if you spot a mistake on the popup.</td></tr>
+        </tbody>
+      </table>
+      <p>After clicking <em>Create Backorder</em> you'll see two deliveries linked to the same SO:</p>
+      <div class="shot">
+        <img src="assets/screenshots/live/live-07-two-deliveries.png" alt="Live Odoo — Two delivery records: original Done, backorder Ready">
+        <div class="shot-caption">Live Odoo — Two deliveries against <span class="field">S00457</span>: <span class="field">OP/OUT/00193</span> Done (the 9 that were picked) and <span class="field">OP/OUT/00194</span> Ready (the 1 unit backorder).</div>
       </div>
       <div class="callout callout-success">
         <div class="callout-title">✓ What "Validate" does</div>
         <ul style="margin:0;padding-left:18px">
-          <li>Stock decrements in the source location (OP/Stock).</li>
-          <li>Delivery status flips to <span class="field">Done</span>.</li>
-          <li>The Sales Order status changes to <span class="field">Delivered</span>.</li>
-          <li>An <strong>Invoice</strong> action becomes available on the SO.</li>
+          <li>Stock decrements in OP/Stock by the picked Quantity (not the Demand).</li>
+          <li>The current delivery flips to <span class="field">Done</span>.</li>
+          <li>The Sales Order's <span class="field">Delivered</span> column updates to the picked Quantity.</li>
+          <li>A new backorder delivery is created in <em>Ready</em> if you chose Create Backorder.</li>
+          <li><span class="btn-ref">Create Invoice</span> becomes available on the SO.</li>
         </ul>
+      </div>
+      <div class="shot">
+        <img src="assets/screenshots/live/live-08-so-with-delivered.png" alt="Live Odoo — Sales Order showing Quantity 10, Delivered 9, Invoiced 0">
+        <div class="shot-caption">Live Odoo — The Sales Order now shows three quantities per line: <span class="field">Quantity</span> 10 (ordered), <span class="field">Delivered</span> 9 (actually picked), <span class="field">Invoiced</span> 0 (yet to be invoiced). Note the Delivery smart button shows <strong>2</strong> — the original plus the backorder.</div>
       </div>
     </div>
   </div>
@@ -326,9 +431,9 @@
   </div>
 
   <div class="step" id="create-invoice">
-    <div class="step-num">8</div>
+    <div class="step-num">11</div>
     <div class="step-body">
-      <h3>Create the invoice from the Sales Order</h3>
+      <h3>Create the draft invoice from the Sales Order</h3>
       <p><span class="login-as">Login as Accounts / Admin</span></p>
       <p>Open the Sales Order (<span class="path">Sales app → Orders → Orders</span>) and click <span class="btn-ref">Create Invoice</span>.</p>
       <p>Odoo offers three options on the popup:</p>
@@ -340,22 +445,47 @@
           <tr><td><span class="field">Down payment (fixed amount)</span></td><td>Pre-payment for a fixed rand amount.</td></tr>
         </tbody>
       </table>
-      <p>Pick <strong>Regular invoice</strong> → click <span class="btn-ref">Create and View Invoice</span>. Odoo opens the draft invoice <span class="field">INV/####</span>.</p>
-      <div class="callout callout-placeholder">
-        <div class="callout-title">📷 VERIFY — screenshot needed from live system</div>
-        <p style="margin:0">The invoicing step is not screenshot-covered in the sprint test cases. Once you walk this against the live Odoo environment, capture the <em>Create Invoice</em> popup and replace this placeholder.</p>
+      <p>Pick <strong>Regular invoice</strong> → click <span class="btn-ref">Create and View Invoice</span>. Odoo opens the draft invoice with a <span class="field">Draft</span> status badge.</p>
+      <div class="shot">
+        <img src="assets/screenshots/live/live-09-draft-invoice-wrong-qty.png" alt="Live Odoo — Draft invoice showing ordered quantity 10, not delivered quantity 9">
+        <div class="shot-caption">Live Odoo — Draft invoice pre-filled with the <strong>ordered</strong> quantity (10), <em>not</em> the delivered quantity (9). This MUST be corrected before confirming — see Step 12.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="correct-invoice-qty">
+    <div class="step-num">12</div>
+    <div class="step-body">
+      <h3>⚠ CRITICAL — Correct the invoice quantities to match what was delivered</h3>
+      <div class="callout callout-danger">
+        <div class="callout-title">🚫 Odoo pre-fills the invoice with the ORDERED quantity, not the DELIVERED quantity</div>
+        <p style="margin:0">In the example: customer ordered 10, we delivered 9 (with a 1-unit backorder). The draft invoice pre-populates the line at <strong>Quantity = 10</strong>. If you confirm without correcting, you will <strong>invoice the customer for stock they have not yet received</strong>.</p>
+      </div>
+      <p>Before clicking Confirm:</p>
+      <ol>
+        <li>On every line of the draft invoice, compare the <span class="field">Quantity</span> column against what was actually delivered (see the Sales Order's <span class="field">Delivered</span> column — Step 10's last screenshot).</li>
+        <li>Edit the invoice <span class="field">Quantity</span> down to match the <em>delivered</em> figure.</li>
+        <li>If a backorder is going to be delivered later, the residual will be invoiced via a <strong>second</strong> Create Invoice run against the same SO once OP/OUT/00194 is validated. <strong>Do not</strong> bundle the future-delivery quantity into this invoice.</li>
+        <li>Once the Quantity column matches Delivered on every line, click <span class="btn-ref">Confirm</span> — the invoice number finalises (e.g. <span class="field">INV/26-27/0032</span>) and the invoice status moves to <span class="field">Posted</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/live/live-10-posted-invoice-corrected.png" alt="Live Odoo — Posted invoice with corrected quantity 9">
+        <div class="shot-caption">Live Odoo — After correcting Quantity 10→9 and clicking Confirm: invoice posts as <span class="field">INV/26-27/0032</span>, Total R 8,139.62 (correct), status <span style="color:#1a5c50">Posted</span>.</div>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠ Quick sanity check before every Confirm</div>
+        <p style="margin:0">Eyeball the invoice <strong>Total</strong> against the Delivered subtotal on the SO. If they don't match, the Quantity column needs correcting somewhere. In this example: SO Delivered total = 9 × R479.77 + 6 × R460 = R 7,077.93 net + 15% VAT = R 8,139.62 ✓</p>
       </div>
     </div>
   </div>
 
   <div class="step" id="send-invoice">
-    <div class="step-num">9</div>
+    <div class="step-num">13</div>
     <div class="step-body">
-      <h3>Confirm and send the invoice</h3>
+      <h3>Send the invoice to the customer</h3>
       <ol>
-        <li>On the draft invoice, review tax codes, due date and totals.</li>
-        <li>Click <span class="btn-ref">Confirm</span> — the invoice number is finalised and posts to the accounting ledger.</li>
-        <li>Click <span class="btn-ref">Send &amp; Print</span> to email the PDF to the customer's billing contact. Body text can be edited before sending.</li>
+        <li>On the posted invoice, click <span class="btn-ref">Send</span> to email the PDF to the customer's billing contact. Body text can be edited before sending.</li>
+        <li>Or click <span class="btn-ref">Print</span> to generate the PDF for handover at the counter / via courier.</li>
       </ol>
       <div class="callout callout-info">
         <div class="callout-title">📌 Customers with portal access</div>
@@ -369,7 +499,7 @@
   </div>
 
   <div class="step" id="register-payment">
-    <div class="step-num">10</div>
+    <div class="step-num">14</div>
     <div class="step-body">
       <h3>Register the payment</h3>
       <p>When the customer pays:</p>
