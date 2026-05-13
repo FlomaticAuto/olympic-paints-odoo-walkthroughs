@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-navy">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Order Walkthrough — Olympic Paints</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>var t=localStorage.getItem('oly-theme');if(t)document.documentElement.className=t;</script>
+<link rel="stylesheet" href="assets/oly-theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo"><img src="assets/logo.jpg" alt="Olympic Paints" width="32" height="32"></div>
+    <span>Odoo Walkthroughs</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Home</a>
+    <a href="01-sales-order.html" class="active">Sales Order</a>
+    <a href="02-customer-collection.html">Customer Collection</a>
+    <a href="03-vehicle-scheduling.html">Vehicle Scheduling</a>
+  </nav>
+  <div class="theme-bar">
+    <button onclick="olyTheme('theme-light',this)">Light</button>
+    <button onclick="olyTheme('theme-dark',this)">Dark</button>
+    <button onclick="olyTheme('theme-brand',this)">Brand</button>
+    <button onclick="olyTheme('theme-navy',this)" class="active">Navy</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-logo"><img src="assets/logo.jpg" alt="Olympic Paints" width="64" height="64"></div>
+  <div class="hero-text">
+    <div class="eyebrow">Walkthrough 01</div>
+    <h1>Sales Order</h1>
+    <p class="subtitle">From quotation to paid invoice — the complete sales-to-cash flow.</p>
+  </div>
+</section>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <h4>Phase 1 — Place the Order</h4>
+    <ul>
+      <li><a href="#prep">Before you start</a></li>
+      <li><a href="#new-quote">Create the quotation</a></li>
+      <li><a href="#addresses">Invoicing &amp; delivery addresses</a></li>
+      <li><a href="#products">Add products &amp; quantities</a></li>
+      <li><a href="#save">Save the quotation</a></li>
+    </ul>
+    <h4>Phase 1.5 — Approvals</h4>
+    <ul>
+      <li><a href="#customer-approval">Pending customer status</a></li>
+      <li><a href="#discount-approval">Discount below rock-bottom</a></li>
+      <li><a href="#credit-approval">Over credit limit</a></li>
+    </ul>
+    <h4>Phase 2 — Confirm &amp; Fulfil</h4>
+    <ul>
+      <li><a href="#confirm">Confirm the quotation</a></li>
+      <li><a href="#delivery-record">The delivery order</a></li>
+      <li><a href="#pick-validate">Pick &amp; validate</a></li>
+    </ul>
+    <h4>Phase 3 — Invoice &amp; Collect</h4>
+    <ul>
+      <li><a href="#create-invoice">Create the invoice</a></li>
+      <li><a href="#send-invoice">Send to customer</a></li>
+      <li><a href="#register-payment">Register payment</a></li>
+    </ul>
+    <h4>Variations</h4>
+    <ul>
+      <li><a href="#email-import">Email order — Excel import</a></li>
+      <li><a href="#portal">Customer portal access</a></li>
+    </ul>
+  </aside>
+
+  <main class="content">
+
+  <!-- ============================================================
+       PHASE 1 — PLACE THE ORDER
+       ============================================================ -->
+  <div class="phase" id="phase-1">
+    <div class="phase-num">Phase 1</div>
+    <h2>Place the Order</h2>
+    <p class="phase-desc">A salesperson opens the Sales app, creates a new quotation, captures customer + products, and saves. The quotation cannot be confirmed yet — confirmation is Phase 2.</p>
+  </div>
+
+  <div class="step" id="prep">
+    <div class="step-num">0</div>
+    <div class="step-body">
+      <h3>Before you start — what must already exist</h3>
+      <ul>
+        <li>A <strong>customer profile</strong> in Contacts. If the customer is brand-new, an Admin (Sejal / Wesley) must create it first via the <span class="path">Contacts app → New</span>. The customer's status will default to <span class="field">Pending</span> until approved.</li>
+        <li><strong>Products</strong> with prices, weights and rock-bottom prices set in the Products module.</li>
+        <li>Your user must have the <span class="field">Salesperson</span> role (Bhadresh, Byron, Nikhil, Amit, Aboo) or be Admin.</li>
+      </ul>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 Onboarding a new customer</div>
+        <p style="margin:0">Customer onboarding is a separate procedure. See <em>Sprint 1 User Guide</em> TC 2.0 for the full flow: creating the main profile, adding invoicing-address branches, adding delivery-address contacts, and assigning a credit limit.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="new-quote">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Create the quotation</h3>
+      <p><span class="login-as">Login as salesperson</span> &mdash; Bhadresh, Byron, Nikhil, Amit or Aboo.</p>
+      <p>Navigate to the <span class="path">Sales app</span> → click <span class="btn-ref">New</span>.</p>
+      <p>Select the customer from the <span class="field">Customer</span> dropdown. The pricelist linked to that customer applies automatically; their default invoicing address and delivery address are inherited from the contact record.</p>
+      <div class="shot">
+        <img src="assets/screenshots/sprint1/p004.png" alt="Sprint 1 — creating a sales order">
+        <div class="shot-caption">Sprint 1, p.4 — Salesperson creates a new quotation against an existing customer.</div>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠ Customer status gates the order</div>
+        <p style="margin:0">If the customer status is <span class="field">Pending</span>, the <strong>Confirm</strong> button will not appear. You can save the quotation but cannot proceed until an Admin approves the customer (Phase 1.5 below).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="addresses">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Confirm invoicing &amp; delivery addresses</h3>
+      <p>By default the quotation uses the customer's main address for both invoicing and delivery. To override (common for multi-branch customers):</p>
+      <ol>
+        <li>Click into the <span class="field">Invoice address</span> field — pick the relevant accounting branch (e.g. "Head Office Accounts").</li>
+        <li>Click into the <span class="field">Delivery address</span> field — pick the branch / site that physically receives the goods.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint1/p022.png" alt="Sprint 1 — selecting invoicing and delivery addresses on the SO">
+        <div class="shot-caption">Sprint 1, p.22 — Choosing invoicing vs delivery branches on the quotation.</div>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 Setting up branch addresses</div>
+        <p style="margin:0">Branches are added as <em>child contacts</em> under the main customer with the address type set to <span class="field">Invoice address</span> or <span class="field">Delivery address</span>. See Sprint 1, pages 17–21.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="products">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Add products &amp; quantities</h3>
+      <p>On the <span class="field">Order Lines</span> tab, click <span class="btn-ref">Add a product</span> for each item:</p>
+      <ol>
+        <li>Pick the product from the dropdown.</li>
+        <li>Set the <span class="field">Quantity</span>.</li>
+        <li>Confirm the <span class="field">Unit Price</span> — the pricelist auto-fills this. Only override it if the customer has a negotiated price.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint2/p017.png" alt="Sprint 2 — adding products to a quotation">
+        <div class="shot-caption">Sprint 2, p.17 — Order Lines with quantities and pricelist-driven unit prices.</div>
+      </div>
+      <div class="callout callout-danger">
+        <div class="callout-title">🚫 Rock-bottom price floor</div>
+        <p style="margin:0">Every product has a <strong>rock-bottom price</strong> set on the product record. If you discount a line below that floor, the system will <em>block confirmation</em> and trigger a discount-approval activity for the Sales Manager (Kishan). See Phase 1.5 → Discount approval.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="save">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Save the quotation</h3>
+      <p>Click <span class="btn-ref">Save</span> (the cloud icon). Odoo assigns a <span class="field">SO###</span> reference number.</p>
+      <p>At this point one of three things happens depending on customer + pricing state:</p>
+      <table>
+        <thead><tr><th>State</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>Customer approved, prices ≥ rock-bottom, value within credit limit</td><td><span class="btn-ref">Confirm</span> button visible — skip to Phase 2.</td></tr>
+          <tr><td>Customer status = Pending</td><td>No <span class="btn-ref">Confirm</span> button. Go to Phase 1.5 → Customer approval.</td></tr>
+          <tr><td>Any line below rock-bottom OR total over credit limit</td><td><span class="btn-ref">Confirm</span> visible but throws an approval error on click. Go to Phase 1.5.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 1.5 — APPROVALS
+       ============================================================ -->
+  <div class="phase" id="phase-1-5">
+    <div class="phase-num">Phase 1.5 — conditional</div>
+    <h2>Approvals</h2>
+    <p class="phase-desc">Three gates can block confirmation: a pending customer, an excess discount, or an over-limit credit balance. Each routes to a different approver.</p>
+  </div>
+
+  <div class="step" id="customer-approval">
+    <div class="step-num">A</div>
+    <div class="step-body">
+      <h3>Approval 1 — Pending customer status</h3>
+      <p><strong>Trigger:</strong> Customer's status is <span class="field">Pending</span> at the time of quoting.</p>
+      <p><strong>How the salesperson raises it:</strong> On the quotation, hover the customer name → click the <span class="btn-ref">↗</span> internal-link arrow → on the customer profile click <span class="btn-ref">Request for Approval</span>.</p>
+      <div class="shot">
+        <img src="assets/screenshots/sprint1/p006.png" alt="Sprint 1 — requesting customer approval">
+        <div class="shot-caption">Sprint 1, p.6–7 — Request for Approval button on the customer profile.</div>
+      </div>
+      <p><strong>How Admin clears it:</strong> <span class="login-as">Login as Admin Olympic Paints</span> → click the Activities icon (top bar) → open the customer-approval activity. On the customer record:</p>
+      <ol>
+        <li>Change <span class="field">Customer Status</span> to <span class="field">Approved (credit partner)</span> — or <span class="field">COD</span> if cash-on-delivery only.</li>
+        <li>Open the <span class="field">Accounting</span> tab → tick <span class="field">Partner Limit</span> → enter the credit limit amount.</li>
+        <li>Click <span class="btn-ref">Save</span>.</li>
+        <li>On the chatter, mark the activity <span class="btn-ref">Done</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint1/p010.png" alt="Sprint 1 — setting the partner limit">
+        <div class="shot-caption">Sprint 1, p.10–11 — Setting the partner credit limit on the customer record.</div>
+      </div>
+      <p>The salesperson can now reopen the quotation and click <span class="btn-ref">Confirm</span>.</p>
+    </div>
+  </div>
+
+  <div class="step" id="discount-approval">
+    <div class="step-num">B</div>
+    <div class="step-body">
+      <h3>Approval 2 — Discount below rock-bottom price</h3>
+      <p><strong>Trigger:</strong> Salesperson sets a unit price below the product's rock-bottom and clicks <span class="btn-ref">Confirm</span>.</p>
+      <p>An <em>error message</em> appears and an approval activity is logged to the Sales Manager (Kishan).</p>
+      <div class="shot">
+        <img src="assets/screenshots/sprint2/p022.png" alt="Sprint 2 — rock-bottom price violation error">
+        <div class="shot-caption">Sprint 2, p.22–23 — Validation error blocks confirm; approval activity is created automatically.</div>
+      </div>
+      <p><strong>How Kishan clears it:</strong> <span class="login-as">Login as Kishan</span> → click the notifications/activities icon → open the most recent Sales Order activity → on the quotation click <span class="btn-ref">Approve Discount</span>. The order can now be confirmed.</p>
+    </div>
+  </div>
+
+  <div class="step" id="credit-approval">
+    <div class="step-num">C</div>
+    <div class="step-body">
+      <h3>Approval 3 — Sales order exceeds the customer's credit limit</h3>
+      <p><strong>Trigger:</strong> Sum of unpaid invoices + this order &gt; the partner limit set on the customer's Accounting tab.</p>
+      <p>An approval-error message appears on <span class="btn-ref">Confirm</span>, and activities are routed to <strong>Kishan</strong> and the <strong>Admin</strong>.</p>
+      <div class="shot">
+        <img src="assets/screenshots/sprint1/p014.png" alt="Sprint 1 — credit limit approval error">
+        <div class="shot-caption">Sprint 1, p.14–15 — Over-limit approval error and notification.</div>
+      </div>
+      <p><strong>How Kishan / Admin clears it:</strong> Activities icon → Sales Order activity → click <span class="btn-ref">Confirm</span> on the activity card. The order is now approved.</p>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 What counts toward the credit limit</div>
+        <p style="margin:0">Odoo compares the partner limit against the <em>total open receivables</em> for that customer (open invoices + draft sales orders), not a single transaction. If the customer is at 95% of limit, even a small new order can trigger this gate.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 2 — CONFIRM AND FULFIL
+       ============================================================ -->
+  <div class="phase" id="phase-2">
+    <div class="phase-num">Phase 2</div>
+    <h2>Confirm &amp; Fulfil</h2>
+    <p class="phase-desc">Quotation becomes Sales Order, Odoo auto-generates a delivery, the warehouse picks the stock and validates the delivery — stock levels decrement.</p>
+  </div>
+
+  <div class="step" id="confirm">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>Confirm the quotation</h3>
+      <p><span class="login-as">Login as salesperson</span> → open the quotation → click <span class="btn-ref">Confirm</span>.</p>
+      <p>Odoo immediately:</p>
+      <ul>
+        <li>Converts the quotation reference (Q###) into a Sales Order (SO###).</li>
+        <li>Creates a linked <strong>delivery order</strong> in the Inventory app.</li>
+        <li>Reserves stock against on-hand quantity (if the <span class="field">Reserve</span> rule is enabled on the warehouse).</li>
+      </ul>
+      <div class="shot">
+        <img src="assets/screenshots/sprint2/p018.png" alt="Sprint 2 — delivery smart button on confirmed SO">
+        <div class="shot-caption">Sprint 2, p.18 — The <strong>Delivery</strong> smart button appears on the confirmed sales order.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="delivery-record">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <h3>Inspect the auto-generated delivery</h3>
+      <p>Click the <span class="btn-ref">Delivery</span> smart button (top right of the SO). This jumps you to the linked <span class="field">WH/OUT/000…</span> delivery record in the Inventory app.</p>
+      <p>The delivery has its own status flow: <span class="field">Draft</span> → <span class="field">Ready</span> → <span class="field">Done</span>. At this point it is normally <em>Ready</em> if stock is available.</p>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 Two ways forward from here</div>
+        <p style="margin:0">From this point a sales order branches into <strong>two delivery paths</strong>:</p>
+        <ol style="margin:8px 0 0">
+          <li><strong>Standard delivery</strong> — the delivery is added to a vehicle batch with a route, a driver, and a scheduled date. See <a href="03-vehicle-scheduling.html">Walkthrough 03 — Vehicle Scheduling</a>.</li>
+          <li><strong>Customer collection</strong> — the customer is collecting from our premises; the delivery is validated at the counter when they arrive. See <a href="02-customer-collection.html">Walkthrough 02 — Customer Collection</a>.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="pick-validate">
+    <div class="step-num">7</div>
+    <div class="step-body">
+      <h3>Pick the stock &amp; validate the delivery</h3>
+      <p><span class="login-as">Login as Logistics Olympic Paints</span></p>
+      <p>Navigate to the <span class="path">Inventory app → Operations tab → Deliveries</span> and open the relevant <span class="field">WH/OUT</span> record.</p>
+      <ol>
+        <li>On each line, set the <span class="field">Done</span> quantity to match what was physically picked. If a partial pick, set <em>Done</em> to the lower number — Odoo will offer a backorder for the balance.</li>
+        <li>Click <span class="btn-ref">Validate</span>.</li>
+        <li>If quantities are partial, Odoo prompts: <em>Create Backorder?</em> — click <span class="btn-ref">Create Backorder</span> to keep the remaining quantity as a new delivery in <em>Ready</em> status.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p024.png" alt="Sprint 5 — delivery validation">
+        <div class="shot-caption">Sprint 5, p.24–25 — Validating the delivery record reduces stock and marks the SO as delivered.</div>
+      </div>
+      <div class="callout callout-success">
+        <div class="callout-title">✓ What "Validate" does</div>
+        <ul style="margin:0;padding-left:18px">
+          <li>Stock decrements in the source location (OP/Stock).</li>
+          <li>Delivery status flips to <span class="field">Done</span>.</li>
+          <li>The Sales Order status changes to <span class="field">Delivered</span>.</li>
+          <li>An <strong>Invoice</strong> action becomes available on the SO.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 3 — INVOICE AND COLLECT
+       ============================================================ -->
+  <div class="phase" id="phase-3">
+    <div class="phase-num">Phase 3</div>
+    <h2>Invoice &amp; Collect</h2>
+    <p class="phase-desc">Create the customer invoice from the delivered Sales Order, send it for payment, and register the payment when it arrives.</p>
+  </div>
+
+  <div class="step" id="create-invoice">
+    <div class="step-num">8</div>
+    <div class="step-body">
+      <h3>Create the invoice from the Sales Order</h3>
+      <p><span class="login-as">Login as Accounts / Admin</span></p>
+      <p>Open the Sales Order (<span class="path">Sales app → Orders → Orders</span>) and click <span class="btn-ref">Create Invoice</span>.</p>
+      <p>Odoo offers three options on the popup:</p>
+      <table>
+        <thead><tr><th>Option</th><th>When to use</th></tr></thead>
+        <tbody>
+          <tr><td><span class="field">Regular invoice</span></td><td>Standard — invoice for the quantities actually delivered. Pick this for almost every Olympic Paints sale.</td></tr>
+          <tr><td><span class="field">Down payment (percentage)</span></td><td>If the customer pre-pays a % before delivery. Rarely used in our flow.</td></tr>
+          <tr><td><span class="field">Down payment (fixed amount)</span></td><td>Pre-payment for a fixed rand amount.</td></tr>
+        </tbody>
+      </table>
+      <p>Pick <strong>Regular invoice</strong> → click <span class="btn-ref">Create and View Invoice</span>. Odoo opens the draft invoice <span class="field">INV/####</span>.</p>
+      <div class="callout callout-placeholder">
+        <div class="callout-title">📷 VERIFY — screenshot needed from live system</div>
+        <p style="margin:0">The invoicing step is not screenshot-covered in the sprint test cases. Once you walk this against the live Odoo environment, capture the <em>Create Invoice</em> popup and replace this placeholder.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="send-invoice">
+    <div class="step-num">9</div>
+    <div class="step-body">
+      <h3>Confirm and send the invoice</h3>
+      <ol>
+        <li>On the draft invoice, review tax codes, due date and totals.</li>
+        <li>Click <span class="btn-ref">Confirm</span> — the invoice number is finalised and posts to the accounting ledger.</li>
+        <li>Click <span class="btn-ref">Send &amp; Print</span> to email the PDF to the customer's billing contact. Body text can be edited before sending.</li>
+      </ol>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 Customers with portal access</div>
+        <p style="margin:0">If the customer has been granted portal access (Sprint 2 TC1.8), the invoice is immediately visible on their portal and they can pay online. See <a href="#portal">Customer portal</a> below for the portal setup procedure.</p>
+      </div>
+      <div class="shot">
+        <img src="assets/screenshots/sprint2/p028.png" alt="Sprint 2 — customer viewing invoices via portal">
+        <div class="shot-caption">Sprint 2, p.28 — Customers can view and pay invoices via the portal.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="register-payment">
+    <div class="step-num">10</div>
+    <div class="step-body">
+      <h3>Register the payment</h3>
+      <p>When the customer pays:</p>
+      <ol>
+        <li>Open the posted invoice.</li>
+        <li>Click <span class="btn-ref">Register Payment</span>.</li>
+        <li>On the popup, confirm:
+          <ul>
+            <li><span class="field">Journal</span> — Bank (or Petty Cash for cash payments).</li>
+            <li><span class="field">Amount</span> — defaults to the full invoice; reduce for a partial payment.</li>
+            <li><span class="field">Payment Date</span>.</li>
+            <li><span class="field">Memo</span> — usually the EFT reference.</li>
+          </ul>
+        </li>
+        <li>Click <span class="btn-ref">Create Payment</span>. The invoice flips to <span class="field">Paid</span> (or <span class="field">Partial</span>).</li>
+      </ol>
+      <div class="callout callout-placeholder">
+        <div class="callout-title">📷 VERIFY — screenshot needed from live system</div>
+        <p style="margin:0">Capture the <em>Register Payment</em> popup as it appears in our environment.</p>
+      </div>
+      <div class="callout callout-success">
+        <div class="callout-title">✓ End of the sales-to-cash flow</div>
+        <p style="margin:0">Invoice paid → customer's open balance reduced → Sales Order shows <strong>Fully Invoiced &amp; Paid</strong>. The whole record stays searchable in Sales → Orders.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       VARIATIONS
+       ============================================================ -->
+  <div class="phase" id="variations">
+    <div class="phase-num">Variations</div>
+    <h2>Alternative entry points</h2>
+    <p class="phase-desc">Two ways to start a sales order other than typing it line-by-line.</p>
+  </div>
+
+  <div class="step" id="email-import">
+    <div class="step-num">V1</div>
+    <div class="step-body">
+      <h3>Email order — import an Excel template</h3>
+      <p>When a customer emails an order on the <em>sales order template</em> Excel sheet:</p>
+      <ol>
+        <li><span class="login-as">Login as Quintus</span> (or any sales user).</li>
+        <li>Navigate <span class="path">Sales app → Quotations</span>.</li>
+        <li>Click the ⚙ gear icon → <span class="btn-ref">Import records</span>.</li>
+        <li>Click <span class="btn-ref">Upload Data File</span> → select the Excel order from your computer.</li>
+        <li>The <span class="field">Partner ID</span> column must match a customer name already on the system. The price is entered manually per line.</li>
+        <li>Click <span class="btn-ref">Test</span>. If green, click <span class="btn-ref">Import</span>.</li>
+      </ol>
+      <p>The records appear as draft quotations. Open each one to verify the order lines, then proceed normally from <a href="#save">Step 4 — Save</a>.</p>
+      <div class="shot">
+        <img src="assets/screenshots/sprint2/p019.png" alt="Sprint 2 — importing a sales order from Excel">
+        <div class="shot-caption">Sprint 2, p.19–20 — Importing an emailed Excel order via the gear menu.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="portal">
+    <div class="step-num">V2</div>
+    <div class="step-body">
+      <h3>Customer portal — letting customers view &amp; pay online</h3>
+      <p>One-time setup per customer:</p>
+      <ol>
+        <li><span class="login-as">Login as Wesley</span> (Admin).</li>
+        <li>Navigate <span class="path">Sales app → Orders → Customers</span> → open the customer profile.</li>
+        <li>Action menu → <span class="btn-ref">Grant portal access</span>. This emails the customer an invitation to set a password.</li>
+        <li>(Optional override:) <span class="path">Settings app → Manage Users</span> → remove the <em>Internal Users</em> filter → open the customer record → <span class="field">Security tab</span> → <span class="btn-ref">Change Password</span> to set a password on their behalf.</li>
+      </ol>
+      <p>Once active, the customer logs in to the Odoo portal and can:</p>
+      <ul>
+        <li>View their open invoices and pay them online.</li>
+        <li>Accept or reject quotations sent to them.</li>
+        <li>View order history.</li>
+      </ul>
+      <div class="shot">
+        <img src="assets/screenshots/sprint2/p027.png" alt="Sprint 2 — granting portal access to a customer">
+        <div class="shot-caption">Sprint 2, p.27 — Setting a portal password under the Security tab.</div>
+      </div>
+    </div>
+  </div>
+
+  </main>
+
+</div>
+
+<footer class="footer">
+  Walkthrough 01 of 03 · Sources: Sprint 1 User Guide, Sprint 2 Test Cases, Sprint 5 Test Cases · <a href="index.html">Back to index</a>
+</footer>
+
+<script>
+const OLY_THEMES=['theme-light','theme-dark','theme-brand','theme-navy'];
+function olyTheme(t,btn){
+  document.documentElement.classList.remove(...OLY_THEMES);
+  document.documentElement.classList.add(t);
+  localStorage.setItem('oly-theme',t);
+  document.querySelectorAll('.theme-bar button').forEach(b=>b.classList.toggle('active',b===btn));
+}
+// Highlight current sidebar section on scroll
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const id=e.target.id;
+      document.querySelectorAll('.sidebar a').forEach(a=>{
+        a.classList.toggle('active',a.getAttribute('href')==='#'+id);
+      });
+    }
+  });
+},{rootMargin:'-30% 0px -60% 0px'});
+document.querySelectorAll('.step[id], .phase[id]').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>

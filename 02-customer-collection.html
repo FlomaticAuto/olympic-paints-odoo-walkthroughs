@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-navy">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Collection Walkthrough — Olympic Paints</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>var t=localStorage.getItem('oly-theme');if(t)document.documentElement.className=t;</script>
+<link rel="stylesheet" href="assets/oly-theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo"><img src="assets/logo.jpg" alt="Olympic Paints" width="32" height="32"></div>
+    <span>Odoo Walkthroughs</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Home</a>
+    <a href="01-sales-order.html">Sales Order</a>
+    <a href="02-customer-collection.html" class="active">Customer Collection</a>
+    <a href="03-vehicle-scheduling.html">Vehicle Scheduling</a>
+  </nav>
+  <div class="theme-bar">
+    <button onclick="olyTheme('theme-light',this)">Light</button>
+    <button onclick="olyTheme('theme-dark',this)">Dark</button>
+    <button onclick="olyTheme('theme-brand',this)">Brand</button>
+    <button onclick="olyTheme('theme-navy',this)" class="active">Navy</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-logo"><img src="assets/logo.jpg" alt="Olympic Paints" width="64" height="64"></div>
+  <div class="hero-text">
+    <div class="eyebrow">Walkthrough 02</div>
+    <h1>Customer Collection</h1>
+    <p class="subtitle">"Out-of-hand" — customer picks up from our premises instead of waiting for a delivery batch.</p>
+  </div>
+</section>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <h4>What this is</h4>
+    <ul>
+      <li><a href="#intro">When to use this flow</a></li>
+      <li><a href="#difference">How it differs from standard delivery</a></li>
+    </ul>
+    <h4>Phase 1 — Take the Order</h4>
+    <ul>
+      <li><a href="#order">Create the sales order</a></li>
+      <li><a href="#mark-pickup">Mark as collection</a></li>
+    </ul>
+    <h4>Phase 2 — Issue the Stock</h4>
+    <ul>
+      <li><a href="#open-delivery">Open the delivery</a></li>
+      <li><a href="#print-slip">Print the picking slip</a></li>
+      <li><a href="#validate">Validate at the counter</a></li>
+      <li><a href="#partial">Partial collection &amp; backorders</a></li>
+    </ul>
+    <h4>Phase 3 — Invoice &amp; Collect</h4>
+    <ul>
+      <li><a href="#invoice">Create &amp; print the invoice</a></li>
+      <li><a href="#payment">Take payment</a></li>
+      <li><a href="#cod">COD customers</a></li>
+    </ul>
+    <h4>Variations</h4>
+    <ul>
+      <li><a href="#walk-in">Walk-in customer (no prior SO)</a></li>
+      <li><a href="#partial-collection">Customer collecting only part of an order</a></li>
+    </ul>
+  </aside>
+
+  <main class="content">
+
+  <!-- ============================================================
+       INTRO
+       ============================================================ -->
+  <div class="phase" id="intro">
+    <div class="phase-num">Overview</div>
+    <h2>When to use this flow</h2>
+    <p class="phase-desc">Use Customer Collection when a customer is picking up their order from our premises in person — not waiting for a delivery vehicle. Common cases: contractor with own bakkie, urgent same-day pickups, smaller stockists collecting weekly orders.</p>
+  </div>
+
+  <div class="step" id="difference">
+    <div class="step-num">i</div>
+    <div class="step-body">
+      <h3>How this differs from the standard delivery flow</h3>
+      <table>
+        <thead><tr><th>Step</th><th>Standard delivery</th><th>Customer collection</th></tr></thead>
+        <tbody>
+          <tr><td>Sales order</td><td>Same — created and confirmed normally</td><td>Same — created and confirmed normally</td></tr>
+          <tr><td>Delivery routing</td><td>Added to a vehicle batch with driver, route, scheduled date</td><td><strong>No batch.</strong> Stays as a standalone <span class="field">WH/OUT</span></td></tr>
+          <tr><td>Stock issued</td><td>By driver at customer's premises after route execution</td><td>At our counter when the customer arrives</td></tr>
+          <tr><td>Proof of delivery</td><td>Driver captures signature on the slip in transit</td><td>Customer signs the slip at the counter</td></tr>
+          <tr><td>Invoicing</td><td>Usually invoiced from office once driver returns</td><td>Often invoiced &amp; paid <em>on the spot</em> at the counter</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 The sales order itself is identical</div>
+        <p style="margin:0">All Phase 1 steps from <a href="01-sales-order.html">Walkthrough 01 — Sales Order</a> still apply: customer status checks, discount approval, credit limit, products and prices. The branching point is <strong>after the SO is confirmed</strong> — instead of pushing the delivery to a vehicle batch, you process it manually at the counter.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 1 — TAKE THE ORDER
+       ============================================================ -->
+  <div class="phase" id="phase-1">
+    <div class="phase-num">Phase 1</div>
+    <h2>Take the Order</h2>
+    <p class="phase-desc">Create and confirm the sales order in the normal way, then flag it as a collection so the warehouse doesn't accidentally route it to a delivery batch.</p>
+  </div>
+
+  <div class="step" id="order">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Create the sales order</h3>
+      <p>Follow <strong>Phase 1 of Walkthrough 01 — Sales Order</strong>:</p>
+      <ol>
+        <li><span class="login-as">Login as salesperson or counter staff</span></li>
+        <li><span class="path">Sales app → New</span></li>
+        <li>Select customer (Walk-in / Cash-Sale customers — see <a href="#walk-in">variation below</a>)</li>
+        <li>Add products &amp; quantities</li>
+        <li>Resolve any credit / discount approvals</li>
+        <li>Click <span class="btn-ref">Confirm</span></li>
+      </ol>
+      <p>The Sales Order is now created, and Odoo has auto-generated a delivery record <span class="field">WH/OUT/####</span>.</p>
+    </div>
+  </div>
+
+  <div class="step" id="mark-pickup">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Mark the delivery as a collection</h3>
+      <p>This is what stops the warehouse from grouping the order into a vehicle batch tomorrow morning.</p>
+      <p>From the confirmed SO, click the <span class="btn-ref">Delivery</span> smart button → on the <span class="field">WH/OUT</span> record:</p>
+      <ol>
+        <li>Set the <span class="field">Scheduled Date</span> to today (defaults to today, but verify).</li>
+        <li>In the <span class="field">Note</span> / chatter, log: <em>"Customer collection — do not add to delivery batch"</em>.</li>
+        <li><strong>VERIFY:</strong> If our environment has a custom <span class="field">Delivery Method</span> or <span class="field">Shipping Policy</span> field with a <em>Collection</em> option, set it now. Sprint 5 does not document a dedicated collection flag — most South African Odoo deployments add a <em>Carrier = "Customer Collection"</em> option for filtering and reporting.</li>
+      </ol>
+      <div class="callout callout-placeholder">
+        <div class="callout-title">⚠ VERIFY — collection flag in live environment</div>
+        <p style="margin:0">Walk this against your live Odoo. If there's a custom field that distinguishes collections from deliveries (Olympic Paints-specific), document the exact field name + value here and replace this placeholder.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 2 — ISSUE THE STOCK
+       ============================================================ -->
+  <div class="phase" id="phase-2">
+    <div class="phase-num">Phase 2</div>
+    <h2>Issue the Stock</h2>
+    <p class="phase-desc">When the customer arrives, find the delivery record, print the picking slip, hand the stock over with the slip signed, and validate the delivery.</p>
+  </div>
+
+  <div class="step" id="open-delivery">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Find &amp; open the delivery</h3>
+      <p><span class="login-as">Login as Logistics Olympic Paints</span> (or counter staff)</p>
+      <p>Navigate <span class="path">Inventory app → Operations tab → Deliveries</span>.</p>
+      <ol>
+        <li>Use the search box — type the customer name, the SO reference, or the <span class="field">WH/OUT</span> number.</li>
+        <li>Filter by <span class="field">Ready</span> status to see only those waiting to be issued.</li>
+        <li>Click the row to open the delivery record.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p006.png" alt="Sprint 5 — locating a delivery record">
+        <div class="shot-caption">Sprint 5, p.6–7 — Sorting and filtering deliveries by Street / City / Status to locate the right WH/OUT.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="print-slip">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Print the picking slip</h3>
+      <p>Before issuing stock, print the picking slip so the warehouse can pick the right items and the customer has something to sign.</p>
+      <ol>
+        <li>On the open <span class="field">WH/OUT</span> record click the <span class="btn-ref">⚙ Action / Print</span> menu (top toolbar).</li>
+        <li>Choose <span class="btn-ref">Picking Operations</span> (or the equivalent in our build) — Odoo generates a PDF showing: customer, address, every product line, quantity, and a signature line.</li>
+        <li>Print 2 copies — one for the customer to sign at handover, one for our records.</li>
+      </ol>
+      <div class="callout callout-placeholder">
+        <div class="callout-title">📷 VERIFY — slip template &amp; print menu position</div>
+        <p style="margin:0">The sprint docs reference "delivery notes" and "proof of delivery" but do not show the print menu. Confirm against your live system: which report templates exist (Picking Operations, Delivery Slip, Delivery Note) and which one Olympic Paints uses for counter handover. Replace with a screenshot of the Print menu and a sample of the printed slip.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="validate">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>Validate the delivery at the counter</h3>
+      <p>The warehouse picks the stock, the customer counts it, signs both copies of the slip. Now mark the delivery done in Odoo:</p>
+      <ol>
+        <li>On the <span class="field">WH/OUT</span> record, confirm each line's <span class="field">Done</span> quantity equals what was physically handed over.</li>
+        <li>(Optional) In the <span class="field">Note</span> field type: <em>"Collected by [name] — signed slip on file"</em>.</li>
+        <li>Click <span class="btn-ref">Validate</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p024.png" alt="Sprint 5 — validating the delivery">
+        <div class="shot-caption">Sprint 5, p.24–25 — The Validate button finalises the delivery, decrements stock, and marks the SO as Delivered.</div>
+      </div>
+      <div class="callout callout-success">
+        <div class="callout-title">✓ What "Validate" does for a collection</div>
+        <ul style="margin:0;padding-left:18px">
+          <li>Stock <strong>decreases</strong> in OP/Stock.</li>
+          <li>The <span class="field">WH/OUT</span> status flips to <span class="field">Done</span>.</li>
+          <li>The Sales Order is marked <span class="field">Delivered</span>.</li>
+          <li>The <span class="btn-ref">Create Invoice</span> action becomes available.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="partial">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <h3>Partial collection — creating a backorder</h3>
+      <p>If the customer only takes part of the order (e.g. they ordered 10 × 20L drums but only have space for 6):</p>
+      <ol>
+        <li>Set the <span class="field">Done</span> quantity on each line to <em>what they actually take</em>.</li>
+        <li>Click <span class="btn-ref">Validate</span>.</li>
+        <li>Odoo prompts <em>"Create Backorder?"</em> — click <span class="btn-ref">Create Backorder</span>.</li>
+        <li>A second <span class="field">WH/OUT</span> record is created with the remaining quantity in <em>Ready</em> status — waiting for their next visit.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p018.png" alt="Sprint 5 — backorder pop-up">
+        <div class="shot-caption">Sprint 5, p.18 — Create Backorder pop-up after partial validation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 3 — INVOICE & COLLECT
+       ============================================================ -->
+  <div class="phase" id="phase-3">
+    <div class="phase-num">Phase 3</div>
+    <h2>Invoice &amp; Collect Payment</h2>
+    <p class="phase-desc">Customer collections are usually invoiced and paid on the spot — especially for COD customers. The invoice can be created and printed in under a minute.</p>
+  </div>
+
+  <div class="step" id="invoice">
+    <div class="step-num">7</div>
+    <div class="step-body">
+      <h3>Create and print the invoice</h3>
+      <p>Open the (now-Delivered) Sales Order — <span class="path">Sales app → Orders</span>.</p>
+      <ol>
+        <li>Click <span class="btn-ref">Create Invoice</span>.</li>
+        <li>Choose <span class="field">Regular invoice</span> → click <span class="btn-ref">Create and View Invoice</span>.</li>
+        <li>Review the draft invoice (tax, due date, totals).</li>
+        <li>Click <span class="btn-ref">Confirm</span> to post.</li>
+        <li>Click <span class="btn-ref">Print</span> → hand the printed invoice to the customer.</li>
+      </ol>
+      <div class="callout callout-placeholder">
+        <div class="callout-title">📷 VERIFY — Create Invoice popup screenshot</div>
+        <p style="margin:0">The sprint docs cover "View invoices via portal" but not the live <em>Create Invoice</em> popup. Capture this from the live system once.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="payment">
+    <div class="step-num">8</div>
+    <div class="step-body">
+      <h3>Take payment at the counter</h3>
+      <p>For Account customers paying later — skip this step; the invoice goes to their statement.</p>
+      <p>For COD / Cash customers paying now:</p>
+      <ol>
+        <li>On the posted invoice click <span class="btn-ref">Register Payment</span>.</li>
+        <li>Set the <span class="field">Journal</span> to <em>Petty Cash</em> (cash) or <em>Bank</em> (card / EFT).</li>
+        <li>Set <span class="field">Amount</span> = invoice total (or partial if a deposit).</li>
+        <li>Set <span class="field">Memo</span> — receipt or card transaction reference.</li>
+        <li>Click <span class="btn-ref">Create Payment</span>.</li>
+      </ol>
+      <p>The invoice flips to <span class="field">Paid</span> and the customer's open balance drops accordingly.</p>
+    </div>
+  </div>
+
+  <div class="step" id="cod">
+    <div class="step-num">9</div>
+    <div class="step-body">
+      <h3>COD customers — the safety gate</h3>
+      <p>If the customer's status is <span class="field">COD</span> (Cash On Delivery — set during onboarding), the system enforces payment <em>before delivery can be validated</em>.</p>
+      <p>The recommended counter sequence for COD collections:</p>
+      <ol>
+        <li>Confirm SO and create the draft invoice <strong>before</strong> validating the delivery.</li>
+        <li>Take payment / register payment on the invoice.</li>
+        <li>Only then validate the delivery and hand over the stock.</li>
+      </ol>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠ Why this order matters</div>
+        <p style="margin:0">If you validate the delivery first, the COD customer has technically "received goods on credit" — which defeats the purpose of the COD flag. Always: Invoice → Payment → Validate Delivery → Hand over.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       VARIATIONS
+       ============================================================ -->
+  <div class="phase" id="variations">
+    <div class="phase-num">Variations</div>
+    <h2>Edge cases</h2>
+    <p class="phase-desc">Two situations that come up at the counter and need their own handling.</p>
+  </div>
+
+  <div class="step" id="walk-in">
+    <div class="step-num">V1</div>
+    <div class="step-body">
+      <h3>Walk-in customer with no profile</h3>
+      <p>If a customer arrives with no account on the system and wants to buy a small quantity for cash:</p>
+      <ol>
+        <li><strong>If we have a generic "Cash Sale" / "Walk-in" customer profile:</strong> use that as the customer on the SO. Note the actual buyer's name in the SO <span class="field">Customer Reference</span> field.</li>
+        <li><strong>If we don't:</strong> create a quick contact via <span class="path">Contacts → New</span>, capture name + phone + ID number, save. Then create the SO normally.</li>
+        <li>For one-off cash buys, the simplest path is the POS app at the till (Sprint 5 TC1.6) — that bypasses the SO/Delivery dance entirely. Use POS for cash counter sales under <strong>VERIFY: rand-threshold</strong>; use the SO flow for larger walk-in orders that need a formal invoice.</li>
+      </ol>
+      <div class="callout callout-placeholder">
+        <div class="callout-title">⚠ VERIFY — Walk-in policy at Olympic Paints</div>
+        <p style="margin:0">Confirm with management: <em>(a)</em> is there a standing "Cash Sale" customer? <em>(b)</em> what's the rand threshold above which a walk-in must get a real customer profile? Replace this callout with the agreed policy.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="partial-collection">
+    <div class="step-num">V2</div>
+    <div class="step-body">
+      <h3>Customer collects part now, we deliver the rest</h3>
+      <p>Useful when a contractor takes a few drums now and asks us to deliver the bulk later.</p>
+      <ol>
+        <li>Validate the counter portion as a <em>partial</em> delivery → <strong>Create Backorder</strong> (see <a href="#partial">Step 6</a>).</li>
+        <li>The backorder <span class="field">WH/OUT</span> stays in <em>Ready</em> status.</li>
+        <li>From here, follow <a href="03-vehicle-scheduling.html">Walkthrough 03 — Vehicle Scheduling</a> to add the backorder to a delivery batch.</li>
+      </ol>
+      <p>This is the cleanest path: each physical movement of stock has its own validated delivery record, so reporting (and audit) shows exactly when each portion left our premises.</p>
+    </div>
+  </div>
+
+  </main>
+
+</div>
+
+<footer class="footer">
+  Walkthrough 02 of 03 · Sources: Sprint 5 Test Cases + Odoo 17 standard documentation · <a href="index.html">Back to index</a>
+</footer>
+
+<script>
+const OLY_THEMES=['theme-light','theme-dark','theme-brand','theme-navy'];
+function olyTheme(t,btn){
+  document.documentElement.classList.remove(...OLY_THEMES);
+  document.documentElement.classList.add(t);
+  localStorage.setItem('oly-theme',t);
+  document.querySelectorAll('.theme-bar button').forEach(b=>b.classList.toggle('active',b===btn));
+}
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const id=e.target.id;
+      document.querySelectorAll('.sidebar a').forEach(a=>{
+        a.classList.toggle('active',a.getAttribute('href')==='#'+id);
+      });
+    }
+  });
+},{rootMargin:'-30% 0px -60% 0px'});
+document.querySelectorAll('.step[id], .phase[id]').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-navy">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicle Scheduling Walkthrough — Olympic Paints</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>var t=localStorage.getItem('oly-theme');if(t)document.documentElement.className=t;</script>
+<link rel="stylesheet" href="assets/oly-theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo"><img src="assets/logo.jpg" alt="Olympic Paints" width="32" height="32"></div>
+    <span>Odoo Walkthroughs</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Home</a>
+    <a href="01-sales-order.html">Sales Order</a>
+    <a href="02-customer-collection.html">Customer Collection</a>
+    <a href="03-vehicle-scheduling.html" class="active">Vehicle Scheduling</a>
+  </nav>
+  <div class="theme-bar">
+    <button onclick="olyTheme('theme-light',this)">Light</button>
+    <button onclick="olyTheme('theme-dark',this)">Dark</button>
+    <button onclick="olyTheme('theme-brand',this)">Brand</button>
+    <button onclick="olyTheme('theme-navy',this)" class="active">Navy</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-logo"><img src="assets/logo.jpg" alt="Olympic Paints" width="64" height="64"></div>
+  <div class="hero-text">
+    <div class="eyebrow">Walkthrough 03</div>
+    <h1>Vehicle Scheduling</h1>
+    <p class="subtitle">Group confirmed deliveries into batches by route, assign drivers and vehicles, manage weight capacity, and dispatch.</p>
+  </div>
+</section>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <h4>Phase 0 — One-time Setup</h4>
+    <ul>
+      <li><a href="#product-weight">Set product weights</a></li>
+      <li><a href="#vehicle-cat">Vehicle categories</a></li>
+      <li><a href="#vehicle-model">Vehicle models</a></li>
+      <li><a href="#vehicle-record">Vehicle records</a></li>
+    </ul>
+    <h4>Phase 1 — Find Orders</h4>
+    <ul>
+      <li><a href="#find-deliveries">Locate confirmed deliveries</a></li>
+      <li><a href="#sort-by-area">Sort &amp; filter by area</a></li>
+    </ul>
+    <h4>Phase 2 — Build the Batch</h4>
+    <ul>
+      <li><a href="#add-to-batch">Add deliveries to a batch</a></li>
+      <li><a href="#schedule-date">Set the scheduled date</a></li>
+      <li><a href="#route-map">View on map &amp; plan route</a></li>
+    </ul>
+    <h4>Phase 3 — Assign &amp; Dispatch</h4>
+    <ul>
+      <li><a href="#assign-driver">Assign driver &amp; vehicle</a></li>
+      <li><a href="#capacity-check">Check weight capacity</a></li>
+      <li><a href="#backorder-overweight">Backorder if over capacity</a></li>
+      <li><a href="#validate-batch">Validate &amp; dispatch the batch</a></li>
+    </ul>
+    <h4>Phase 4 — Edge Cases</h4>
+    <ul>
+      <li><a href="#double-booking">Double-booking prevention</a></li>
+      <li><a href="#third-party">Third-party carrier flow</a></li>
+    </ul>
+    <h4>Phase 5 — Reporting</h4>
+    <ul>
+      <li><a href="#vehicle-reports">Vehicle &amp; driver reports</a></li>
+      <li><a href="#moves-history">Moves history by batch</a></li>
+    </ul>
+  </aside>
+
+  <main class="content">
+
+  <!-- ============================================================
+       PHASE 0 — ONE-TIME SETUP
+       ============================================================ -->
+  <div class="phase" id="phase-0">
+    <div class="phase-num">Phase 0 — one-time setup</div>
+    <h2>Configure Once</h2>
+    <p class="phase-desc">These steps are normally done at go-live and rarely revisited. Each new product needs a weight, each new vehicle needs a record, and the vehicle categories define our weight limits.</p>
+  </div>
+
+  <div class="step" id="product-weight">
+    <div class="step-num">A</div>
+    <div class="step-body">
+      <h3>Set the product weight (every SKU)</h3>
+      <p><span class="login-as">Login as Sejal</span> (or Admin)</p>
+      <p>Navigate <span class="path">Sales app → Products tab → Products</span>.</p>
+      <ol>
+        <li>Open the product record.</li>
+        <li>Click the <span class="field">Inventory</span> tab.</li>
+        <li>Set the <span class="field">Weight (kg)</span> — accurate to the kilogram. This is the value Odoo sums up per batch to compare against vehicle capacity.</li>
+        <li>Click <span class="btn-ref">Save</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p010.png" alt="Sprint 5 — editing product weight on the Inventory tab">
+        <div class="shot-caption">Sprint 5, p.10 — Product weight is set under the Inventory tab on the product record.</div>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠ Wrong weights = wrong capacity warnings</div>
+        <p style="margin:0">If a 20L drum is recorded as 1 kg, Odoo will let you load 5 tonnes of paint into a 1-tonne bakkie without warning. Audit product weights any time a packaging change happens.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="vehicle-cat">
+    <div class="step-num">B</div>
+    <div class="step-body">
+      <h3>Create a vehicle category</h3>
+      <p>Categories group vehicles by capacity (e.g. "1-Tonne Bakkie", "3-Tonne Truck", "8-Tonne Truck"). Each category has a max weight which Odoo enforces when batches are built.</p>
+      <p><span class="login-as">Login as Logistics Olympic Paints</span></p>
+      <p>Navigate <span class="path">Fleet app → Configuration tab → Categories</span> → click <span class="btn-ref">New</span>.</p>
+      <ol>
+        <li><span class="field">Category name</span> — e.g. <em>Truck — 3-Tonne</em>.</li>
+        <li><span class="field">Max weight</span> — in kilograms (e.g. 3000).</li>
+        <li><span class="field">Max volume</span> — optional, only if volume is a constraint for some routes.</li>
+        <li>Click <span class="btn-ref">Save</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p012.png" alt="Sprint 5 — creating a vehicle category">
+        <div class="shot-caption">Sprint 5, p.12 — Vehicle category with max weight (and optional max volume).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="vehicle-model">
+    <div class="step-num">C</div>
+    <div class="step-body">
+      <h3>Create a vehicle model</h3>
+      <p>Models are reusable templates (e.g. "Toyota Hilux 2.4 GD-6"). Each model is linked to a category.</p>
+      <p>Navigate <span class="path">Fleet app → Configuration tab → Models</span> → click <span class="btn-ref">New</span>.</p>
+      <ol>
+        <li><span class="field">Model Name</span></li>
+        <li><span class="field">Manufacturer</span></li>
+        <li><span class="field">Vehicle Type</span> (Car / Bicycle / Other — usually <em>Other</em> for trucks)</li>
+        <li><span class="field">Category</span> — choose the category created in Step B.</li>
+        <li>Click <span class="btn-ref">Save</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p013.png" alt="Sprint 5 — creating a vehicle model">
+        <div class="shot-caption">Sprint 5, p.13 — Model record with linked category.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="vehicle-record">
+    <div class="step-num">D</div>
+    <div class="step-body">
+      <h3>Add the actual vehicle</h3>
+      <p>Navigate <span class="path">Fleet app → Fleet tab → Fleet</span> → click <span class="btn-ref">New</span>.</p>
+      <ol>
+        <li><span class="field">Model</span> — the model created in Step C. The category auto-populates.</li>
+        <li><span class="field">License Plate</span></li>
+        <li><span class="field">Driver</span> — the user account of the assigned driver. (Optional <em>Future Driver</em> for handovers.)</li>
+        <li><span class="field">Fleet Manager</span> — typically Logistics Olympic Paints.</li>
+        <li>Click <span class="btn-ref">Save</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p014.png" alt="Sprint 5 — vehicle record">
+        <div class="shot-caption">Sprint 5, p.14 — Vehicle record linking model, license plate, driver and fleet manager.</div>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 Drivers are Odoo users</div>
+        <p style="margin:0">Each driver needs an Odoo user account so they can be selected here. If a driver leaves, deactivate the user — they will no longer appear in the driver dropdown but historic batches keep their attribution intact.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 1 — FIND ORDERS
+       ============================================================ -->
+  <div class="phase" id="phase-1">
+    <div class="phase-num">Phase 1</div>
+    <h2>Find the Orders to Deliver</h2>
+    <p class="phase-desc">Start of every dispatch shift. Open the deliveries list, filter to today's confirmed orders, and group by area before building batches.</p>
+  </div>
+
+  <div class="step" id="find-deliveries">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Open the deliveries list</h3>
+      <p><span class="login-as">Login as Logistics Olympic Paints</span></p>
+      <p>Navigate <span class="path">Inventory app → Operations tab → Deliveries</span>.</p>
+      <p>You see every <span class="field">WH/OUT</span> record currently in the system: Draft, Ready, Done and Cancelled.</p>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p006.png" alt="Sprint 5 — deliveries list">
+        <div class="shot-caption">Sprint 5, p.6 — The Deliveries list view in the Inventory app.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="sort-by-area">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Sort &amp; filter by area</h3>
+      <p>The goal is to find deliveries going to the same town / suburb so they can be grouped into one trip.</p>
+      <ol>
+        <li>Click the <span class="field">Scheduled Date</span> column heading to sort by date — newest first.</li>
+        <li>Click the <span class="field">Street</span>, <span class="field">Street 2</span>, <span class="field">City</span> or <span class="field">State</span> column heading to sort/filter by address.</li>
+        <li>Use the top-right search box to filter by city (e.g. type <em>"Polokwane"</em>).</li>
+        <li>Confirm the status filter is <span class="field">Ready</span> — only Ready deliveries can be batched.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p007.png" alt="Sprint 5 — sorting deliveries by address column">
+        <div class="shot-caption">Sprint 5, p.7 — Sorting by Street / City to find geographically adjacent deliveries.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 2 — BUILD THE BATCH
+       ============================================================ -->
+  <div class="phase" id="phase-2">
+    <div class="phase-num">Phase 2</div>
+    <h2>Build the Batch</h2>
+    <p class="phase-desc">Pick the orders going to the same area, add them to a new batch, set the scheduled date, and visualise the route on a map.</p>
+  </div>
+
+  <div class="step" id="add-to-batch">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Add deliveries to a new batch</h3>
+      <ol>
+        <li>Tick the checkboxes for every delivery in the same area.</li>
+        <li>Click <span class="btn-ref">Actions</span> (top of list) → <span class="btn-ref">Add to batch</span>.</li>
+        <li>On the popup:
+          <ul>
+            <li>Select <span class="field">a new batch transfer</span>.</li>
+            <li>Enter a <span class="field">Description</span> — e.g. <em>"Polokwane North run — 13 May"</em>.</li>
+            <li>Select a <span class="field">Responsible</span> employee (usually the driver, or the dispatcher).</li>
+          </ul>
+        </li>
+        <li>Click <span class="btn-ref">Confirm</span>.</li>
+        <li>A green toast notification appears with the batch reference — click it to jump straight to the batch.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p008.png" alt="Sprint 5 — Add to batch popup">
+        <div class="shot-caption">Sprint 5, p.7–8 — Selecting deliveries and adding them to a new batch transfer.</div>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 Adding to an existing batch</div>
+        <p style="margin:0">If a batch is already open for that route, choose <em>"an existing batch transfer"</em> on the popup instead — handy when an order is confirmed after dispatch planning starts.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="schedule-date">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Set the scheduled date on the batch</h3>
+      <p>On the batch record, set <span class="field">Scheduled Date</span> to the planned delivery date/time. Click <span class="btn-ref">Save</span>.</p>
+      <p>Alternatively reach the same batch via <span class="path">Inventory → Operations tab → Batch Transfers</span> → click the record.</p>
+    </div>
+  </div>
+
+  <div class="step" id="route-map">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>View the route on a map</h3>
+      <p>On the batch record click the <span class="btn-ref">Map</span> button.</p>
+      <ul>
+        <li>The left pane lists every delivery in the batch.</li>
+        <li>Click a delivery number — the map zooms to that delivery address.</li>
+        <li>Click <span class="btn-ref">View in Google Maps</span> to open the full multi-stop route in Google Maps — share that link with the driver's phone for turn-by-turn navigation.</li>
+      </ul>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p009.png" alt="Sprint 5 — map view of batch">
+        <div class="shot-caption">Sprint 5, p.8–9 — Map view shows every delivery pin; "View in Google Maps" exports the route.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 3 — ASSIGN & DISPATCH
+       ============================================================ -->
+  <div class="phase" id="phase-3">
+    <div class="phase-num">Phase 3</div>
+    <h2>Assign &amp; Dispatch</h2>
+    <p class="phase-desc">Pick the driver, pick the vehicle, check that the load fits, and validate the batch to mark it dispatched.</p>
+  </div>
+
+  <div class="step" id="assign-driver">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <h3>Assign the driver and vehicle</h3>
+      <p>On the batch record:</p>
+      <ol>
+        <li>Set <span class="field">Driver</span> — the assigned driver user.</li>
+        <li>Set <span class="field">Vehicle</span> — the truck/bakkie that will physically run the route.</li>
+        <li>Set <span class="field">Vehicle Category</span> — usually auto-fills from the vehicle's model.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="step" id="capacity-check">
+    <div class="step-num">7</div>
+    <div class="step-body">
+      <h3>Check the weight capacity</h3>
+      <p>As soon as a vehicle is assigned, Odoo:</p>
+      <ul>
+        <li>Sums the <em>product weight × quantity</em> across every line in every delivery in the batch.</li>
+        <li>Compares it to the vehicle category's <span class="field">Max weight</span>.</li>
+        <li>Shows the result as a <strong>percentage of capacity</strong> on the batch.</li>
+      </ul>
+      <p>Below 100% — proceed to Step 9 to validate. At or over 100% — go to Step 8 to handle the overage.</p>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p017.png" alt="Sprint 5 — capacity percentage on batch">
+        <div class="shot-caption">Sprint 5, p.17 — Capacity percentage displayed once vehicle + category are set.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="backorder-overweight">
+    <div class="step-num">8</div>
+    <div class="step-body">
+      <h3>Over capacity — create a backorder</h3>
+      <p>The trick: reduce the line quantities on the over-capacity delivery to what the truck can actually carry, then create a backorder for the rest.</p>
+      <ol>
+        <li>On the batch, expand the delivery line that puts you over capacity.</li>
+        <li>Edit the <span class="field">Quantity</span> on that line down to a number that brings total batch weight under 100%.</li>
+        <li>Click <span class="btn-ref">Save</span>.</li>
+        <li>Click <span class="btn-ref">Validate</span> on the delivery.</li>
+        <li>The <em>Create Backorder?</em> pop-up appears — click <span class="btn-ref">Create Backorder</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p018.png" alt="Sprint 5 — backorder pop-up">
+        <div class="shot-caption">Sprint 5, p.18–19 — Create Backorder dialog after a partial validation.</div>
+      </div>
+      <p><strong>Then handle the backorder:</strong></p>
+      <ol>
+        <li>Navigate <span class="path">Inventory → Operations → Deliveries</span>.</li>
+        <li>Click the column-filter icon → tick <span class="field">Back Order of</span> to surface the column.</li>
+        <li>Click the <span class="field">Back Order of</span> heading to sort; tick the backorder records.</li>
+        <li><span class="btn-ref">Actions</span> → <span class="btn-ref">Add to Batch</span> → fill in the popup → <span class="btn-ref">Confirm</span>.</li>
+        <li>Open the new batch → assign a different vehicle + driver → <span class="btn-ref">Validate</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p019.png" alt="Sprint 5 — backorder records list">
+        <div class="shot-caption">Sprint 5, p.19 — Filtering deliveries by "Back Order of" to find and rebatch the residual stock.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="validate-batch">
+    <div class="step-num">9</div>
+    <div class="step-body">
+      <h3>Validate &amp; dispatch the batch</h3>
+      <p>Once driver, vehicle and capacity are correct:</p>
+      <ol>
+        <li>Click <span class="btn-ref">Validate</span> on the batch.</li>
+        <li>The status moves: <span class="field">Draft</span> → <span class="field">Ready</span> → <span class="field">Dispatched</span> (manually marked) → <span class="field">Done</span> (once driver returns and individual deliveries are validated).</li>
+        <li>Stock decrements as each individual <span class="field">WH/OUT</span> in the batch is validated by the driver / on driver return.</li>
+      </ol>
+      <div class="callout callout-success">
+        <div class="callout-title">✓ What "Validate" does at batch level</div>
+        <ul style="margin:0;padding-left:18px">
+          <li>Locks the deliveries into the batch (no more additions).</li>
+          <li>Records the driver + vehicle + scheduled date for reporting.</li>
+          <li>Generates the consolidated batch picking slip you can print for the driver.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 4 — EDGE CASES
+       ============================================================ -->
+  <div class="phase" id="phase-4">
+    <div class="phase-num">Phase 4</div>
+    <h2>Edge Cases</h2>
+    <p class="phase-desc">Situations that come up regularly: double-booking the same truck, and using an outside courier.</p>
+  </div>
+
+  <div class="step" id="double-booking">
+    <div class="step-num">10</div>
+    <div class="step-body">
+      <h3>Double-booking prevention</h3>
+      <p>Odoo does not <em>block</em> double-booking out of the box — it relies on the dispatcher noticing. The discipline:</p>
+      <ol>
+        <li>Before assigning a vehicle to a new batch, check the existing batches it's on.</li>
+        <li>Navigate <span class="path">Inventory → Operations → Batch Transfers</span>.</li>
+        <li>Filter by the vehicle (or by date) — if the truck is already booked at an overlapping date/time, the dispatch will collide.</li>
+        <li>If the windows do not overlap (e.g. AM run vs PM run), proceed.</li>
+        <li>If they do overlap, either re-shuffle batches or pick a different driver/vehicle.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p021.png" alt="Sprint 5 — double-booking guidance">
+        <div class="shot-caption">Sprint 5, p.20–21 — Sprint guidance on double-booking: check scheduled dates and assign different vehicle/driver if needed.</div>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠ This is a manual gate</div>
+        <p style="margin:0">There is no hard system block. Use the Calendar / Gantt view on Batch Transfers to spot overlaps visually before confirming the assignment.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="third-party">
+    <div class="step-num">11</div>
+    <div class="step-body">
+      <h3>Third-party carrier flow</h3>
+      <p>When delivery is outsourced (e.g. an external courier picks up at our warehouse and runs the drop):</p>
+      <ol>
+        <li>Build the batch normally with the deliveries.</li>
+        <li><strong>Leave the Driver, Vehicle and Vehicle Category fields blank</strong> on the batch — these are for our own fleet only.</li>
+        <li>Click <span class="btn-ref">Validate</span> on the batch and on each delivery as the courier collects.</li>
+        <li>Capture the courier's bill in Accounting:
+          <ol>
+            <li><span class="login-as">Login as Kishan</span></li>
+            <li><span class="path">Accounting → Vendors tab → Bills</span> → <span class="btn-ref">New</span>.</li>
+            <li>Add the courier as <span class="field">Vendor</span>.</li>
+            <li>Set <span class="field">Bill reference</span> and <span class="field">Bill date</span>.</li>
+            <li>Add an invoice line for the delivery expense + amount.</li>
+            <li>Click <span class="btn-ref">Confirm</span>.</li>
+          </ol>
+        </li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p023.png" alt="Sprint 5 — vendor bill for courier">
+        <div class="shot-caption">Sprint 5, p.22–23 — Capturing the third-party courier's bill as a vendor bill in Accounting.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PHASE 5 — REPORTING
+       ============================================================ -->
+  <div class="phase" id="phase-5">
+    <div class="phase-num">Phase 5</div>
+    <h2>Reporting</h2>
+    <p class="phase-desc">Once batches are running, three reports answer the operational questions: who delivered how much, which vehicle did which routes, and which deliveries are still outstanding.</p>
+  </div>
+
+  <div class="step" id="vehicle-reports">
+    <div class="step-num">12</div>
+    <div class="step-body">
+      <h3>Vehicle &amp; driver reports</h3>
+      <p>Navigate <span class="path">Inventory → Operations → Batch Transfers</span>.</p>
+      <ol>
+        <li>Click the filter icon → remove the default filter → select <span class="field">Vehicle</span> as the filter dimension.</li>
+        <li>Switch between List / Kanban / Gantt / Graph / Pivot / Calendar views with the icons in the top right.</li>
+        <li>For driver-level reporting: clear the filter and re-filter by <span class="field">Driver</span>.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p028.png" alt="Sprint 5 — vehicle reports view">
+        <div class="shot-caption">Sprint 5, p.27–28 — Filtering Batch Transfers by Vehicle, then changing view (List / Gantt / Graph / Pivot).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="moves-history">
+    <div class="step-num">13</div>
+    <div class="step-body">
+      <h3>Moves History — by batch transfer</h3>
+      <p>For the detail report of what stock actually moved on each batch:</p>
+      <ol>
+        <li>Navigate <span class="path">Inventory → Reporting → Moves History</span>.</li>
+        <li>Keep the default <span class="field">Done</span> filter.</li>
+        <li>Click the filter icon → select <span class="field">Batch Transfer</span>.</li>
+        <li>List view shows every batch's delivery count and quantity. Switch to Kanban or Pivot for summary views.</li>
+      </ol>
+      <div class="shot">
+        <img src="assets/screenshots/sprint5/p030.png" alt="Sprint 5 — moves history by batch">
+        <div class="shot-caption">Sprint 5, p.29–30 — Moves History grouped by Batch Transfer.</div>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-title">📌 Common reporting questions</div>
+        <ul style="margin:0;padding-left:18px">
+          <li><strong>How many deliveries did each driver complete this week?</strong> Batch Transfers → Filter Driver → Group by Week → Pivot.</li>
+          <li><strong>How much stock did the 3-tonne truck move last month?</strong> Moves History → Filter Vehicle → Group by Month → Pivot.</li>
+          <li><strong>Which deliveries are still outstanding?</strong> Deliveries → Filter Status = <em>Ready</em>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  </main>
+
+</div>
+
+<footer class="footer">
+  Walkthrough 03 of 03 · Source: Sprint 5 Test Cases (TC1.1 – TC1.4) · <a href="index.html">Back to index</a>
+</footer>
+
+<script>
+const OLY_THEMES=['theme-light','theme-dark','theme-brand','theme-navy'];
+function olyTheme(t,btn){
+  document.documentElement.classList.remove(...OLY_THEMES);
+  document.documentElement.classList.add(t);
+  localStorage.setItem('oly-theme',t);
+  document.querySelectorAll('.theme-bar button').forEach(b=>b.classList.toggle('active',b===btn));
+}
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const id=e.target.id;
+      document.querySelectorAll('.sidebar a').forEach(a=>{
+        a.classList.toggle('active',a.getAttribute('href')==='#'+id);
+      });
+    }
+  });
+},{rootMargin:'-30% 0px -60% 0px'});
+document.querySelectorAll('.step[id], .phase[id]').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>

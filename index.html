@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-navy">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odoo Walkthroughs — Olympic Paints</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>var t=localStorage.getItem('oly-theme');if(t)document.documentElement.className=t;</script>
+<link rel="stylesheet" href="assets/oly-theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo"><img src="assets/logo.jpg" alt="Olympic Paints" width="32" height="32"></div>
+    <span>Odoo Walkthroughs</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html" class="active">Home</a>
+    <a href="01-sales-order.html">Sales Order</a>
+    <a href="02-customer-collection.html">Customer Collection</a>
+    <a href="03-vehicle-scheduling.html">Vehicle Scheduling</a>
+  </nav>
+  <div class="theme-bar">
+    <button onclick="olyTheme('theme-light',this)">Light</button>
+    <button onclick="olyTheme('theme-dark',this)">Dark</button>
+    <button onclick="olyTheme('theme-brand',this)">Brand</button>
+    <button onclick="olyTheme('theme-navy',this)" class="active">Navy</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-logo"><img src="assets/logo.jpg" alt="Olympic Paints" width="64" height="64"></div>
+  <div class="hero-text">
+    <div class="eyebrow">Operational Reference</div>
+    <h1>Odoo Walkthroughs</h1>
+    <p class="subtitle">Step-by-step transaction guides for Olympic Paints staff — built from Sprints 1, 2, 4, 5 plus standard Odoo references.</p>
+  </div>
+</section>
+
+<div class="tile-grid">
+
+  <a class="tile" href="01-sales-order.html">
+    <div class="tile-num">01</div>
+    <h3>Sales Order</h3>
+    <p>The full sales-to-cash flow: create the quotation, run credit and discount checks, confirm the sales order, fulfil through delivery, and invoice the customer.</p>
+    <div class="tile-meta">
+      <span>3 phases</span>
+      <span>Sales · Logistics · Accounting</span>
+      <span>Sprints 1 &amp; 2</span>
+    </div>
+  </a>
+
+  <a class="tile" href="02-customer-collection.html">
+    <div class="tile-num">02</div>
+    <h3>Customer Collection</h3>
+    <p>"Out-of-hand" deliveries — when a customer picks up from our premises instead of waiting for a delivery batch. Slip printed, stock issued at the counter, invoiced.</p>
+    <div class="tile-meta">
+      <span>3 phases</span>
+      <span>Sales · Warehouse · Accounting</span>
+      <span>Sprint 5 + Odoo std</span>
+    </div>
+  </a>
+
+  <a class="tile" href="03-vehicle-scheduling.html">
+    <div class="tile-num">03</div>
+    <h3>Vehicle Scheduling</h3>
+    <p>Group confirmed deliveries into batches by route, assign drivers and vehicles, manage weight capacity with backorders, prevent double-booking, and dispatch.</p>
+    <div class="tile-meta">
+      <span>5 phases</span>
+      <span>Logistics · Fleet</span>
+      <span>Sprint 5</span>
+    </div>
+  </a>
+
+</div>
+
+<section style="max-width:1180px;margin:32px auto;padding:0 24px">
+  <div class="callout callout-info">
+    <div class="callout-title">📖 How these are organised</div>
+    <p style="margin:0">Each walkthrough is split into <strong>phases</strong> matching how the work flows through the business: <em>placing the order → moving through fulfilment → delivery &amp; invoicing</em>. Within each phase, every numbered step shows who logs in, where they navigate, and exactly what to click. Screenshots from the test-case PDFs are embedded where available; gaps that need photos from your live environment are marked <strong>placeholder</strong>.</p>
+  </div>
+
+  <div class="callout callout-placeholder">
+    <div class="callout-title">⚠ Items to verify in your live environment</div>
+    <p style="margin:0 0 8px">Some details in the sprint documentation may differ from your production setup. Items that need confirmation are flagged inline with a <strong>VERIFY</strong> marker. Walk through each guide against the live system once and replace placeholders with real screenshots.</p>
+  </div>
+
+  <h2 style="font-family:var(--font-display);font-weight:800;text-transform:uppercase;letter-spacing:0.02em;font-size:24px;margin:32px 0 12px">Source materials</h2>
+  <table>
+    <thead><tr><th>Document</th><th>Pages</th><th>Best for</th></tr></thead>
+    <tbody>
+      <tr><td>Olympic Paints Sprint 1 User Guide.pdf</td><td>30</td><td>Credit limit · Customer onboarding · Warehouse setup</td></tr>
+      <tr><td>Olympic Paints Sprint 2 Test Cases.pdf</td><td>35</td><td>Sales order creation · Email order import · Discount approval · Customer portal</td></tr>
+      <tr><td>Olympic Paints Sprint 4 Test Cases.pdf</td><td>56</td><td>Inventory records · Stock movements · SKU management</td></tr>
+      <tr><td>Olympic Paints Sprint 5 Test Cases.pdf</td><td>42</td><td>Deliveries · Batch transfers · Vehicle scheduling · Backorders · POS</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer class="footer">
+  Olympic Paints — Odoo Operational Walkthroughs · Built from UAT Sprint Test Cases · Source PDFs in <code>Sprint Documents/Sprint/</code>
+</footer>
+
+<script>
+const OLY_THEMES=['theme-light','theme-dark','theme-brand','theme-navy'];
+function olyTheme(t,btn){
+  document.documentElement.classList.remove(...OLY_THEMES);
+  document.documentElement.classList.add(t);
+  localStorage.setItem('oly-theme',t);
+  document.querySelectorAll('.theme-bar button').forEach(b=>b.classList.toggle('active',b===btn));
+}
+</script>
+</body>
+</html>
